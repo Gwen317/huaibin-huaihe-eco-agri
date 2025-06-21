@@ -6,9 +6,29 @@
         <div class="banner-content">
           <div class="banner-image">
             <!-- 轮播图内容 -->
-            <div class="slider-controls">
-              <button class="prev">❮</button>
-              <button class="next">❯</button>
+            <div class="carousel-container">
+              <div class="carousel-track" :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
+                <div class="carousel-slide" v-for="(slide, index) in carouselSlides" :key="index">
+                  <img :src="slide.image" :alt="slide.title" class="carousel-image">
+                  <div class="carousel-caption">
+                    <h3>{{ slide.title }}</h3>
+                    <p>{{ slide.description }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="carousel-indicators">
+                <span 
+                  v-for="(slide, index) in carouselSlides" 
+                  :key="index" 
+                  class="indicator" 
+                  :class="{ active: currentSlide === index }"
+                  @click="goToSlide(index)"
+                ></span>
+              </div>
+              <div class="slider-controls">
+                <button class="prev" @click="prevSlide">❮</button>
+                <button class="next" @click="nextSlide">❯</button>
+              </div>
             </div>
           </div>
         </div>
@@ -83,11 +103,12 @@
         <div class="announcement-box">
           <h3>公示公告</h3>
           <div class="announcement-content">
-            <div class="announcement-item">
-              <span>评标结果公示</span>
+            <div class="announcement-item" v-for="(item, index) in announcements" :key="index">
+              <span class="announcement-date">{{ item.date }}</span>
+              <a href="javascript:void(0)" class="announcement-title">{{ item.title }}</a>
             </div>
-            <div class="announcement-item">
-              <span>评标结果公示</span>
+            <div class="view-more">
+              <a href="javascript:void(0)">查看更多 &gt;</a>
             </div>
           </div>
         </div>
@@ -97,37 +118,145 @@
 </template>
 
 <script setup>
-// 主页组件逻辑
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+
+// 轮播图数据
+const carouselSlides = ref([
+  {
+    title: '淮滨县淮河生态农业发展投资有限公司',
+    description: '致力于推动农业现代化和乡村振兴',
+    image: '../assets/banner-bg.jpg'
+  },
+  {
+    title: '高标准农田建设项目',
+    description: '打造现代化农田示范区',
+    image: '../assets/banner-bg.jpg'
+  },
+  {
+    title: '水产养殖基地',
+    description: '发展生态水产养殖产业',
+    image: '../assets/banner-bg.jpg'
+  }
+]);
+
+// 公告数据
+const announcements = ref([
+  { title: '关于2024年淮滨县高标准农田建设项目招标结果公示', date: '2024-05-20' },
+  { title: '淮滨县淮河生态农业发展投资有限公司2024年第二季度财务报表公示', date: '2024-05-15' },
+  { title: '关于淮滨县农业产业园区规划环评公示', date: '2024-05-10' },
+  { title: '2024年农业科技示范推广项目申报通知', date: '2024-05-05' }
+]);
+
+// 轮播图逻辑
+const currentSlide = ref(0);
+let autoplayInterval = null;
+
+const nextSlide = () => {
+  currentSlide.value = (currentSlide.value + 1) % carouselSlides.value.length;
+};
+
+const prevSlide = () => {
+  currentSlide.value = (currentSlide.value - 1 + carouselSlides.value.length) % carouselSlides.value.length;
+};
+
+const goToSlide = (index) => {
+  currentSlide.value = index;
+};
+
+const startAutoplay = () => {
+  autoplayInterval = setInterval(() => {
+    nextSlide();
+  }, 5000); // 每5秒切换一次
+};
+
+onMounted(() => {
+  startAutoplay();
+});
+
+onBeforeUnmount(() => {
+  if (autoplayInterval) {
+    clearInterval(autoplayInterval);
+  }
+});
 </script>
 
 <style scoped>
 /* 轮播图区域 */
 .banner {
-  background: url('../assets/banner-bg.jpg') no-repeat center center;
-  background-size: cover;
+  background-color: #f5f5f5;
   color: #fff;
   padding: 30px 0;
 }
 
-.banner-title {
-  font-size: 36px;
-  text-align: center;
-  margin-bottom: 30px;
-  font-weight: bold;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-  background-color: rgba(0, 0, 0, 0.4);
-  padding: 15px;
-  border-radius: 5px;
-  display: inline-block;
-}
-
 .banner-image {
   position: relative;
-  height: 300px;
+  height: 400px;
   border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.5s ease;
+  height: 100%;
+}
+
+.carousel-slide {
+  min-width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+  color: white;
+}
+
+.carousel-caption h3 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.carousel-indicators {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+}
+
+.indicator.active {
+  background-color: white;
 }
 
 .slider-controls button {
@@ -140,6 +269,7 @@
   padding: 15px;
   font-size: 24px;
   cursor: pointer;
+  z-index: 10;
 }
 
 .slider-controls .prev {
@@ -236,9 +366,39 @@
 .announcement-item {
   padding: 10px 0;
   border-bottom: 1px dashed #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .announcement-item:last-child {
   border-bottom: none;
+}
+
+.announcement-date {
+  color: #666;
+  font-size: 14px;
+}
+
+.announcement-title {
+  flex: 1;
+  margin-left: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.announcement-title:hover {
+  color: #0d4ea2;
+}
+
+.view-more {
+  text-align: right;
+  margin-top: 15px;
+}
+
+.view-more a {
+  color: #0d4ea2;
+  font-size: 14px;
 }
 </style> 
